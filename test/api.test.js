@@ -1,4 +1,5 @@
 const { expect } = require('chai')
+const { afterEach } = require('mocha')
 const axios = require('axios').default
 
 const baseUrl = 'https://trello.com/1'
@@ -6,6 +7,14 @@ const token = '61790ff29348904bc42217da/bEp7IwPtm0HYRzI4qTB7MhMk1jA57uQdr7jxPHHb
 
 describe('Trello. API. Тесты доски', () => {
     const orgId = '617910020c566f69cac8e33d'
+    let newBoardId;
+
+    afterEach('Удаление новой доски', () => {
+        if(newBoardId !== undefined){
+            deleteBoardById(newBoardId)
+            newBoardId = null
+        }
+    })
 
     it('Создание новой доски', async () => {
         // получить список существующих досок -> размер списка = х
@@ -13,8 +22,7 @@ describe('Trello. API. Тесты доски', () => {
         const boardCountBefore = boards.length
 
         // создать доску
-        const newBoardId = await createBoard('api test')
-        console.log('New board: ', newBoardId)
+        newBoardId = await createBoard('api test')
 
         // получить список существующих досок -> размер списка = у
         boards = await getAllBoards(orgId);
@@ -26,6 +34,9 @@ describe('Trello. API. Тесты доски', () => {
     })
     
     it('Удаление существующей доски', async () => {
+        //предварительно, создаем доску
+        await createBoard('api test')
+        
         // получить список существующих досок -> размер списка = х
         let boards = await getAllBoards(orgId);
         const boardCountBefore = boards.length
@@ -81,8 +92,9 @@ async function createBoard(boardName){
         "name": boardName,
         "token": token
     }
-
+    
     const response = await axios.post(url, reqBody, reqConfig)
+    console.log('Новая доска: ', response.data.id)
     return response.data.id
 }
 
@@ -98,7 +110,8 @@ async function deleteBoardById(boardId) {
     reqConfig.data = {
         "token": token
     }
-    
+    console.log('Удаляем доску: ', boardId);
+
     const response = await axios.delete(url, reqConfig)
     
     return response.status === 200

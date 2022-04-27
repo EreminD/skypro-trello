@@ -4,7 +4,7 @@
   "description": "решение дз 5",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --timeout 10000"
   },
   "author": "",
   "license": "ISC",
