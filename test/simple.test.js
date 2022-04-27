@@ -1,5 +1,4 @@
 const { expect } = require("chai")
-const axios = require('axios').default
 
 describe('просто проверяем инсрументы', () => {
     it.skip('Mocha test', function() {
