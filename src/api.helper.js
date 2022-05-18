@@ -3,43 +3,27 @@ const { faker } = require('@faker-js/faker');
 const config = require('../config.json')
 
 const baseUrl = config.urlApi
-const token = config.access_token
+const GET = 'GET'
+const POST = 'POST'
+const PUT = 'PUT'
+const DELETE = 'DELETE'
+
 
 async function getAllBoards(organization){
     const url = baseUrl + `/Organizations/${organization}?boards=open&board_fields=all&fields=boards`
-
-    // TODO: решить вот эту тему с копипастой
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    const response = await axios.get(url, reqConfig)
+    const response = await send(GET, url)
     return response.data.boards
 }
 
 async function getAllLists(boardId){
     const url = `${baseUrl}/boards/${boardId}/lists`
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    const response = await axios.get(url, reqConfig)
+    const response = await send(GET, url)
     return response.data
 }
 
 async function getAllCards(boardId){
     const url = `${baseUrl}/boards/${boardId}/cards`
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    const response = await axios.get(url, reqConfig)
+    const response = await send(GET, url)
     return response.data
 }
 
@@ -50,57 +34,30 @@ async function createRandomBoard(useDefaultLists = false){
 async function createBoard(boardName, useDefaultLists = false){
     const url = baseUrl + '/boards/'
 
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
     const reqBody = {
         "defaultLists": useDefaultLists,
-        "name": boardName,
-        "token": token
+        "name": boardName
     }
-    
-    const response = await axios.post(url, reqBody, reqConfig)
+
+    const response = await send(POST, url, reqBody)
     console.log('Новая доска: ', response.data.id)
     return response.data
 }
 
 async function deleteBoardById(boardId) {
-    const url = `${baseUrl}/boards/${boardId}`
+    const url = `${baseUrl}/boards/${boardId}`    
 
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    reqConfig.data = {
-        "token": token
-    }
     console.log('Удаляем доску: ', boardId);
-
-    const response = await axios.delete(url, reqConfig)
-    
+    const response = await send(DELETE, url)
     return response.status === 200
 }
 
 async function deleteCardById(id){
     const url = `${baseUrl}/cards/${id}`
 
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    reqConfig.data = {
-        "token": token
-    }
     console.log('Удаляем карточку: ', id);
 
-    const response = await axios.delete(url, reqConfig)
+    const response = await send(DELETE, url)
     
     return response.status === 200
 }
@@ -108,20 +65,13 @@ async function deleteCardById(id){
 async function createCard(boardId, listId, cardName){
     const url = `${baseUrl}/cards/`
 
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
     const reqBody = {
         "name": cardName,
         "idBoard": boardId,
-        "idList": listId,
-        "token": token
+        "idList": listId
     }
 
-    const response = await axios.post(url, reqBody, reqConfig)
+    const response = await send(POST, url, reqBody)
     console.log('Новая карточка: ', response.data.id)
     return response.data.id
 }
@@ -129,44 +79,23 @@ async function createCard(boardId, listId, cardName){
 async function editCard(cardId, propertyName, propertyValue){
     const url = `${baseUrl}/cards/${cardId}`
    
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
     const reqBody = {}
-    reqBody.token =  token
     reqBody[propertyName] = propertyValue
     
-    const response = await axios.put(url, reqBody, reqConfig)
+    const response = await send(PUT, url, reqBody)
     console.log('Новая карточка: ', response.data.id)
     return response.data.id
 }
 
 async function getCardById(id){
     const url = `${baseUrl}/cards/${id}?fields=idBoard,name,desc,labels`
-    
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    const response = await axios.get(url, reqConfig)
+    const response = await send(GET, url)
     return response.data
 }
 
 async function getListOfCard(id){
     const url = `${baseUrl}/cards/${id}/list`
-    
-    const reqConfig = {
-        headers : {
-            'Cookie':`token=${token}`
-        }
-    }
-
-    const response = await axios.get(url, reqConfig)
+    const response = await send(GET, url)
     return response.data
 }
 
@@ -179,7 +108,13 @@ async function clearSpace(orgId){
     }
 }
 
-
+const token = config.access_token
+const cookie = {'Cookie':`token=${token}`}
+async function send(method, url, data = {}, headers = cookie){
+    data.token = token
+    const config = { method, url, data, headers}
+    return await axios(config)
+}
 
 module.exports = {
     getAllBoards,
