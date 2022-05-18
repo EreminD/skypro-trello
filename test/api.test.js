@@ -1,5 +1,9 @@
-const { expect } = require('chai')
-const { afterEach } = require('mocha')
+const {
+    expect
+} = require('chai')
+const {
+    afterEach
+} = require('mocha')
 const {
     getAllBoards,
     getAllLists,
@@ -14,15 +18,16 @@ const {
     clearSpace,
     createRandomBoard
 } = require('../src/api.helper')
+const config = require('../config.json')
 
-const orgId = '617910020c566f69cac8e33d'
+const orgId = config.orgId
 
 describe('Trello. API. Тесты доски', () => {
-    let newBoardId;
+    let newBoard;
     afterEach('Удаление новой доски', async () => {
-        if(newBoardId !== null){
-            await deleteBoardById(newBoardId)
-            newBoardId = null
+        if (newBoard !== null) {
+            await deleteBoardById(newBoard.id)
+            newBoard = null
         }
     })
 
@@ -32,7 +37,7 @@ describe('Trello. API. Тесты доски', () => {
         const boardCountBefore = boards.length
 
         // создать доску
-        newBoardId = await createBoard('api test')
+        newBoard = await createBoard('api test')
 
         // получить список существующих досок -> размер списка = у
         boards = await getAllBoards(orgId);
@@ -42,11 +47,11 @@ describe('Trello. API. Тесты доски', () => {
         const diff = boardCountAfter - boardCountBefore
         expect(diff).equals(1)
     })
-    
+
     it('Удаление существующей доски', async () => {
         //предварительно, создаем доску
         await createBoard('api test')
-        
+
         // получить список существующих досок -> размер списка = х
         let boards = await getAllBoards(orgId);
         const boardCountBefore = boards.length
@@ -54,35 +59,35 @@ describe('Trello. API. Тесты доски', () => {
         // удалить доску
         const boardId = boards[0].id
         const isDeleted = await deleteBoardById(boardId)
-        
+
         // получить список существующих досок -> размер списка = у
         boards = await getAllBoards(orgId);
         const boardCountAfter = boards.length
 
         // проверить, что у-х === 1
         expect(isDeleted).true
-        expect(boardCountBefore-boardCountAfter).equals(1)
+        expect(boardCountBefore - boardCountAfter).equals(1)
     })
 })
 
 describe('Trello. API. Тесты карточки', () => {
 
-    let tempBoardId
+    let tempBoard
     let tempListId
     let tempListIdNew
     let tempCardId
 
     beforeEach('Создаем доску и списки', async () => {
-        tempBoardId = await createRandomBoard(true)
-        const lists = await getAllLists(tempBoardId)
+        tempBoard = await createRandomBoard(true)
+        const lists = await getAllLists(tempBoard.id)
         tempListId = lists[0].id
         tempListIdNew = lists[1].id
     })
 
     afterEach('Удаляем доску и списки', async () => {
-        if(tempBoardId !== null){
-            await deleteBoardById(tempBoardId)
-            tempBoardId = null
+        if (tempBoard !== null) {
+            await deleteBoardById(tempBoard.id)
+            tempBoard = null
         }
     })
 
@@ -90,61 +95,63 @@ describe('Trello. API. Тесты карточки', () => {
         await clearSpace(orgId)
     })
 
-    it('Создание новой карточки', async () => {  
+    it('Создание новой карточки', async () => {
         // создать карточку
-        await createCard(tempBoardId, tempListId, 'test card api')
+        await createCard(tempBoard.id, tempListId, 'test card api')
 
         // получить список существующих карточек -> размер списка = у
-        const cards = await getAllCards(tempBoardId);
+        const cards = await getAllCards(tempBoard.id);
         const cardCountAfter = cards.length
 
         // проверить, что количество карточек === 1
         expect(cardCountAfter).equals(1)
     })
-    
-    it('Редактирование новой карточки', async () => {  
+
+    it('Редактирование новой карточки', async () => {
         // 1. создать карточку
-        tempCardId = await createCard(tempBoardId, tempListId, 'test card api')
+        tempCardId = await createCard(tempBoard.id, tempListId, 'test card api')
 
         // 2. отредактировать карточку
         const newName = 'card edited'
         await editCard(tempCardId, 'name', newName)
 
         // 3. получить инфо по карточке
-        const cardData = await getCardById(tempCardId) 
+        const cardData = await getCardById(tempCardId)
 
         // 4. проверить, что имя карточки === имени из шага 2 
         expect(cardData.name).equals(newName)
     })
-    it('Перетаскивание  карточки', async () => {  
+
+    // - Перемещение карточки в другую колонку
+    it('Перетаскивание  карточки', async () => {
         // 1. создать карточку
-        tempCardId = await createCard(tempBoardId, tempListId, 'test card api')
+        tempCardId = await createCard(tempBoard.id, tempListId, 'test card api')
 
         // 2. отредактировать карточку
         const newList = tempListIdNew
         await editCard(tempCardId, 'idList', newList)
 
         // 3. получить инфо по карточке
-        const list = await getListOfCard(tempCardId) 
+        const list = await getListOfCard(tempCardId)
 
         // 4. проверить, что имя карточки === имени из шага 2 
         expect(list.id).equals(newList)
     })
 
-    it('Удаление карточки', async () => {  
+    it('Удаление карточки', async () => {
         // создать карточку
-        tempCardId = await createCard(tempBoardId, tempListId, 'test card api')
-    
+        tempCardId = await createCard(tempBoard.id, tempListId, 'test card api')
+
         // получить список существующих карточек -> размер списка = у
         await deleteCardById(tempCardId);
-        
-        const cards = await getAllCards(tempBoardId);
+
+        const cards = await getAllCards(tempBoard.id);
         const cardCountAfter = cards.length
 
         // проверить, что количество карточек === 
         expect(cardCountAfter).equals(0)
     })
 
-    // - Перемещение карточки в другую колонку
-    
+
+
 })
